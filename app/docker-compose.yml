@@ -1,0 +1,97 @@
+name: ujian-api
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ujian-api:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SERVER_NAME: ":8080"
+    volumes:
+      # Hanya storage yang persist; source code ikut image
+      - app-storage:/app/storage
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      internal:
+      edge:
+        aliases:
+          - ujian-api          # nama ini yang dipakai Caddy edge
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    command:
+      - --innodb-buffer-pool-size=1G
+      - --max-connections=200
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-data:/var/lib/mysql
+    # TIDAK ada `ports:` -> database tidak terbuka ke internet.
+    # Kalau perlu akses dari laptop, pakai: ssh -L 3306:127.0.0.1:3306 user@vps
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis-data:/data
+    networks: [internal]
+
+  # ---- Opsional: aktifkan dengan `docker compose --profile jobs up -d` ----
+  worker:
+    image: ujian-api:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      RUN_MIGRATIONS: "false"
+    command: ["php", "artisan", "queue:work", "--tries=3", "--max-time=3600"]
+    depends_on: [app, db, redis]
+    networks: [internal]
+    profiles: [jobs]
+
+  scheduler:
+    image: ujian-api:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      RUN_MIGRATIONS: "false"
+    command: ["php", "artisan", "schedule:work"]
+    depends_on: [app, db]
+    networks: [internal]
+    profiles: [jobs]
+
+volumes:
+  db-data:
+  redis-data:
+  app-storage:
+
+networks:
+  internal:
+  edge:
+    external: true

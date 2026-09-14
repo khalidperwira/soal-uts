@@ -1,0 +1,39 @@
+{
+	email {$ACME_EMAIL}
+	# HTTPS otomatis via Let's Encrypt, tidak perlu certbot.
+}
+
+# ---------------- Backend ujian praktik ----------------
+ujian-uts.khalidperwira.com {
+	encode zstd gzip
+
+	# Batas ukuran request (API JSON, tidak perlu besar)
+	request_body {
+		max_size 16MB
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		-Server
+	}
+
+	reverse_proxy ujian-api:8080 {
+		health_uri /up
+		health_interval 30s
+	}
+
+	# Log akses ke stdout -> terbaca via `docker compose logs caddy`,
+	# rotasi ditangani Docker (lihat opsi logging di compose).
+	log {
+		output stdout
+		format json
+	}
+}
+
+# ---------------- Contoh aplikasi berikutnya ----------------
+# app2.khalidperwira.com {
+# 	encode zstd gzip
+# 	reverse_proxy app2:8080
+# }
