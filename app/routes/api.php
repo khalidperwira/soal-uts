@@ -13,8 +13,9 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Rute Autentikasi Publik (Rate Limit: 60 request / menit)
-Route::prefix('auth')->middleware('throttle:60,1')->group(function () {
+// Rute Autentikasi Publik (Rate Limit: env('AUTH_RATE_LIMIT', 300) request / menit per IP)
+// Dinaikkan dari default Laravel (60) karena satu kelas siswa bisa keluar lewat satu IP sekolah (NAT).
+Route::prefix('auth')->middleware('throttle:'.env('AUTH_RATE_LIMIT', 300).',1')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 });
