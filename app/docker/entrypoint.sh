@@ -29,4 +29,9 @@ php artisan route:cache
 php artisan view:cache
 php artisan storage:link 2>/dev/null || true
 
+# storage/ adalah volume terpisah dari image -> salin ulang spec Swagger tiap start
+# supaya tetap ada walau volume kosong/baru. Sumber: resources/openapi.json (harus
+# disinkronkan manual dari docs/openapi.json di root repo kalau spec berubah).
+cp resources/openapi.json storage/app/public/openapi.json 2>/dev/null || true
+
 exec "$@"

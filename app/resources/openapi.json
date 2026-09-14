@@ -1,0 +1,1833 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API Ujian Pemrograman Desktop (CRUD REST API)",
+    "version": "1.0.0",
+    "description": "Dokumentasi & Kontrak OpenAPI 3.0.3 untuk 4 Paket Soal Pemrograman Desktop (To-Do Tasks, Attendances, Menus, dan Tickets) dengan Autentikasi & Otorisasi Bearer Token (Laravel Sanctum)",
+    "contact": {
+      "name": "Muhammad Khalid Perwira",
+      "email": "khalidperwira@gmail.com",
+      "url": "https://www.khalidperwira.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api",
+      "description": "Local Development Server"
+    },
+    {
+      "url": "https://ujian-uts.khalidperwira.com/api",
+      "description": "Production Server"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Autentikasi & Token Management (Laravel Sanctum)"
+    },
+    {
+      "name": "Tasks",
+      "description": "Paket 1: Personal To-Do & Task Manager"
+    },
+    {
+      "name": "Attendances",
+      "description": "Paket 2: Sistem Presensi Kehadiran Mahasiswa/Karyawan"
+    },
+    {
+      "name": "Menus",
+      "description": "Paket 3: Manajemen Menu & Kasir Kafe (Cafe POS)"
+    },
+    {
+      "name": "Tickets",
+      "description": "Paket 4: Antrean Loket Pelayanan & Helpdesk Tiket"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Registrasi pengguna baru",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User berhasil didaftarkan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validasi input gagal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login untuk mendapatkan Bearer Token",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login berhasil dan Bearer Token digenerate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Kredensial tidak valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout & mencabut Bearer Token aktif",
+        "responses": {
+          "200": {
+            "description": "Logout berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteSuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Melihat informasi profil pengguna yang sedang login",
+        "responses": {
+          "200": {
+            "description": "Profil pengguna ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks": {
+      "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Mengambil seluruh daftar tugas (Tasks)",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "in_progress",
+                "completed"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil daftar tugas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Menambahkan tugas baru (Create Task)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tugas berhasil ditambahkan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/tasks/{id}": {
+      "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Mengambil detail 1 tugas berdasarkan ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail tugas ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Memperbarui data tugas (Update Task)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tugas berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Menghapus tugas (Delete Task)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tugas berhasil dihapus",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteSuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/attendances": {
+      "get": {
+        "tags": [
+          "Attendances"
+        ],
+        "summary": "Mengambil seluruh riwayat presensi",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "description": "Filter tanggal (format DD-MM-YYYY, contoh: 10-09-2026)",
+            "schema": {
+              "type": "string",
+              "example": "10-09-2026"
+            }
+          },
+          {
+            "name": "nim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil riwayat presensi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Attendances"
+        ],
+        "summary": "Mencatat presensi baru (Create Attendance)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttendanceInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Presensi berhasil dicatat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/attendances/{id}": {
+      "get": {
+        "tags": [
+          "Attendances"
+        ],
+        "summary": "Detail catatan presensi berdasarkan ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data presensi ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Attendances"
+        ],
+        "summary": "Update jam keluar / revisi status presensi",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttendanceInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Presensi berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Attendances"
+        ],
+        "summary": "Menghapus data presensi",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data presensi berhasil dihapus",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteSuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/menus": {
+      "get": {
+        "tags": [
+          "Menus"
+        ],
+        "summary": "Mengambil seluruh katalog menu kafe",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Coffee",
+                "Non-Coffee",
+                "Snack",
+                "Main Course"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil katalog menu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Menus"
+        ],
+        "summary": "Menambahkan menu baru (Create Menu)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Menu berhasil ditambahkan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/menus/{id}": {
+      "get": {
+        "tags": [
+          "Menus"
+        ],
+        "summary": "Detail menu berdasarkan ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail menu ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Menus"
+        ],
+        "summary": "Update data menu (harga/stok/status ketersediaan)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MenuInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Menu berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Menus"
+        ],
+        "summary": "Menghapus menu dari sistem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Menu berhasil dihapus",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteSuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/tickets": {
+      "get": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Mengambil seluruh antrean tiket layanan",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Menunggu",
+                "Dipanggil",
+                "Selesai",
+                "Batal"
+              ]
+            }
+          },
+          {
+            "name": "service_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Customer Service",
+                "Teller",
+                "Helpdesk"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil antrean tiket",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Membuat / mengambil nomor tiket antrean baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tiket antrean berhasil dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/tickets/{id}": {
+      "get": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Detail tiket antrean berdasarkan ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail tiket ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Update status tiket antrean (Panggil / Selesai / Batal)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tiket berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Membatalkan / menghapus tiket antrean",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tiket antrean berhasil dihapus",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteSuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum Token",
+        "description": "Masukkan Bearer Token yang didapatkan dari POST /api/auth/login"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Validasi request gagal",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthenticated atau token tidak valid",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UnauthorizedResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource tidak ditemukan",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "integer",
+            "example": 10
+          },
+          "totalPage": {
+            "type": "integer",
+            "example": 1
+          },
+          "total": {
+            "type": "integer",
+            "example": 2
+          },
+          "current": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "RegisterInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "password",
+          "password_confirmation"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Ahmad Fauzi"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "fauzi@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "password123"
+          },
+          "password_confirmation": {
+            "type": "string",
+            "format": "password",
+            "example": "password123"
+          }
+        }
+      },
+      "LoginInput": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "fauzi@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "password123"
+          }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "body": {
+            "type": "object",
+            "properties": {
+              "user": {
+                "$ref": "#/components/schemas/User"
+              },
+              "token": {
+                "type": "string",
+                "example": "1|7rVw8L8zF2k4GqU10pZ..."
+              }
+            }
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Ahmad Fauzi"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "fauzi@example.com"
+          }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "body": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 400
+          },
+          "status": {
+            "type": "string",
+            "example": "bad_request"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "example": {
+              "title": [
+                "must not be null"
+              ]
+            }
+          }
+        }
+      },
+      "UnauthorizedResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 401
+          },
+          "status": {
+            "type": "string",
+            "example": "unauthorized"
+          },
+          "errors": {
+            "type": "object",
+            "example": {
+              "auth": [
+                "Unauthenticated or invalid bearer token"
+              ]
+            }
+          }
+        }
+      },
+      "DeleteSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "body": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "example": "Data berhasil dihapus"
+              }
+            }
+          }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Mengerjakan Laporan Praktikum"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Modul 4 Integrasi REST API"
+          },
+          "category": {
+            "type": "string",
+            "example": "Kuliah"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed"
+            ],
+            "example": "pending"
+          },
+          "due_date": {
+            "type": "string",
+            "description": "Tenggat waktu (format DD-MM-YYYY)",
+            "nullable": true,
+            "example": "15-09-2026"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TaskInput": {
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Mengerjakan Laporan Praktikum"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Modul 4 Integrasi REST API"
+          },
+          "category": {
+            "type": "string",
+            "example": "Kuliah"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed"
+            ],
+            "default": "pending",
+            "example": "pending"
+          },
+          "due_date": {
+            "type": "string",
+            "description": "Tenggat waktu (format DD-MM-YYYY)",
+            "nullable": true,
+            "example": "15-09-2026"
+          }
+        }
+      },
+      "TaskResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "body": {
+            "$ref": "#/components/schemas/Task"
+          }
+        }
+      },
+      "TaskListResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "body": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "Attendance": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "nim": {
+            "type": "string",
+            "example": "20260801001"
+          },
+          "student_name": {
+            "type": "string",
+            "example": "Ahmad Fauzi"
+          },
+          "date": {
+            "type": "string",
+            "description": "Tanggal presensi (format DD-MM-YYYY)",
+            "example": "10-09-2026"
+          },
+          "time_in": {
+            "type": "string",
+            "example": "08:00:00"
+          },
+          "time_out": {
+            "type": "string",
+            "nullable": true,
+            "example": "17:00:00"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Hadir",
+              "Izin",
+              "Sakit",
+              "Alpha"
+            ],
+            "example": "Hadir"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "example": "Tepat waktu"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AttendanceInput": {
+        "type": "object",
+        "required": [
+          "nim",
+          "student_name",
+          "date",
+          "time_in",
+          "status"
+        ],
+        "properties": {
+          "nim": {
+            "type": "string",
+            "example": "20260801001"
+          },
+          "student_name": {
+            "type": "string",
+            "example": "Ahmad Fauzi"
+          },
+          "date": {
+            "type": "string",
+            "description": "Tanggal presensi (format DD-MM-YYYY)",
+            "example": "10-09-2026"
+          },
+          "time_in": {
+            "type": "string",
+            "example": "08:00:00"
+          },
+          "time_out": {
+            "type": "string",
+            "nullable": true,
+            "example": "17:00:00"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Hadir",
+              "Izin",
+              "Sakit",
+              "Alpha"
+            ],
+            "example": "Hadir"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "example": "Hadir sesi pagi"
+          }
+        }
+      },
+      "AttendanceResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "body": {
+            "$ref": "#/components/schemas/Attendance"
+          }
+        }
+      },
+      "AttendanceListResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "body": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attendance"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "Menu": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Caramel Macchiato"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Coffee",
+              "Non-Coffee",
+              "Snack",
+              "Main Course"
+            ],
+            "example": "Coffee"
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "example": 28000
+          },
+          "stock": {
+            "type": "integer",
+            "example": 45
+          },
+          "is_available": {
+            "type": "boolean",
+            "example": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Espresso dengan sirup vanila dan saus karamel manis"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MenuInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "category",
+          "price"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Caramel Macchiato"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Coffee",
+              "Non-Coffee",
+              "Snack",
+              "Main Course"
+            ],
+            "example": "Coffee"
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "example": 28000
+          },
+          "stock": {
+            "type": "integer",
+            "default": 0,
+            "example": 45
+          },
+          "is_available": {
+            "type": "boolean",
+            "default": true,
+            "example": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Espresso dengan saus karamel"
+          }
+        }
+      },
+      "MenuResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "body": {
+            "$ref": "#/components/schemas/Menu"
+          }
+        }
+      },
+      "MenuListResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "body": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Menu"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "Ticket": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "ticket_number": {
+            "type": "string",
+            "example": "A-001"
+          },
+          "customer_name": {
+            "type": "string",
+            "example": "Budi Santoso"
+          },
+          "service_type": {
+            "type": "string",
+            "enum": [
+              "Customer Service",
+              "Teller",
+              "Helpdesk"
+            ],
+            "example": "Customer Service"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Menunggu",
+              "Dipanggil",
+              "Selesai",
+              "Batal"
+            ],
+            "example": "Menunggu"
+          },
+          "counter_number": {
+            "type": "string",
+            "nullable": true,
+            "example": "Loket 1"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "example": "Permohonan pembukaan akun"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TicketInput": {
+        "type": "object",
+        "required": [
+          "ticket_number",
+          "customer_name",
+          "service_type"
+        ],
+        "properties": {
+          "ticket_number": {
+            "type": "string",
+            "example": "A-001"
+          },
+          "customer_name": {
+            "type": "string",
+            "example": "Budi Santoso"
+          },
+          "service_type": {
+            "type": "string",
+            "enum": [
+              "Customer Service",
+              "Teller",
+              "Helpdesk"
+            ],
+            "example": "Customer Service"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Menunggu",
+              "Dipanggil",
+              "Selesai",
+              "Batal"
+            ],
+            "default": "Menunggu",
+            "example": "Menunggu"
+          },
+          "counter_number": {
+            "type": "string",
+            "nullable": true,
+            "example": "Loket 1"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "example": "Catatan pelayanan"
+          }
+        }
+      },
+      "TicketResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "body": {
+            "$ref": "#/components/schemas/Ticket"
+          }
+        }
+      },
+      "TicketListResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "body": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ticket"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      }
+    }
+  }
+}

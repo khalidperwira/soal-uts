@@ -1,7 +1,5 @@
 <?php
 
-use Wotz\SwaggerUi\Http\Middleware\EnsureUserIsAuthorized;
-
 return [
     'files' => [
         [
@@ -29,10 +27,10 @@ return [
 
             /*
              * The middleware that is applied to the route.
+             * Publik: docs/openapi.json memang sudah dibagikan ke siswa untuk testing Postman/Bruno.
              */
             'middleware' => [
                 'web',
-                EnsureUserIsAuthorized::class,
             ],
 
             /*
