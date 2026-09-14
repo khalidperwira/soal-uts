@@ -16,14 +16,14 @@ use Illuminate\Support\Facades\Route;
 // Rute Autentikasi Publik (Rate Limit: 60 request / menit)
 Route::prefix('auth')->middleware('throttle:60,1')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login',    [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login']);
 });
 
-// Rute CRUD Terproteksi Sanctum (Rate Limit: 300 request / menit)
-Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
+// Rute CRUD Terproteksi Sanctum (Rate Limit: env('API_RATE_LIMIT', 300) request / menit)
+Route::middleware(['auth:sanctum', 'throttle:'.env('API_RATE_LIMIT', 300).',1'])->group(function () {
     // Auth status & revoke token
     Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::get('auth/me',      [AuthController::class, 'me']);
+    Route::get('auth/me', [AuthController::class, 'me']);
 
     // Paket 1: Personal To-Do & Task Manager
     Route::apiResource('tasks', TaskController::class);

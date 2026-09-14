@@ -12,13 +12,10 @@ class MenuController extends Controller
 {
     /**
      * Menampilkan daftar data Menu Kafe dengan filter kategori & pencarian nama.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Menu::query();
+        $query = Menu::query()->where('user_id', $request->user()->id);
 
         if ($request->filled('category')) {
             $query->where('category', $request->query('category'));
@@ -41,26 +38,23 @@ class MenuController extends Controller
 
     /**
      * Menyimpan data Menu baru.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'name'         => 'required|string|max:150',
-            'category'     => 'nullable|in:Coffee,Non-Coffee,Snack,Main Course',
-            'price'        => 'required|numeric|min:0',
-            'stock'        => 'nullable|integer|min:0',
+            'name' => 'required|string|max:150',
+            'category' => 'nullable|in:Coffee,Non-Coffee,Snack,Main Course',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'nullable|integer|min:0',
             'is_available' => 'nullable|boolean',
-            'description'  => 'nullable|string',
+            'description' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return $this->errorResponse($validator->errors(), 400, 'bad_request');
         }
 
-        $menu = Menu::create($validator->validated());
+        $menu = Menu::create([...$validator->validated(), 'user_id' => $request->user()->id]);
 
         return $this->successResponse($menu, 201);
     }
@@ -69,11 +63,10 @@ class MenuController extends Controller
      * Menampilkan detail satu data Menu.
      *
      * @param  int|string  $id
-     * @return JsonResponse
      */
-    public function show($id): JsonResponse
+    public function show(Request $request, $id): JsonResponse
     {
-        $menu = Menu::find($id);
+        $menu = Menu::where('user_id', $request->user()->id)->find($id);
 
         if (! $menu) {
             return $this->errorResponse(['menu' => ['Menu item not found']], 404, 'not_found');
@@ -85,25 +78,23 @@ class MenuController extends Controller
     /**
      * Memperbarui data Menu yang sudah ada.
      *
-     * @param  Request  $request
      * @param  int|string  $id
-     * @return JsonResponse
      */
     public function update(Request $request, $id): JsonResponse
     {
-        $menu = Menu::find($id);
+        $menu = Menu::where('user_id', $request->user()->id)->find($id);
 
         if (! $menu) {
             return $this->errorResponse(['menu' => ['Menu item not found']], 404, 'not_found');
         }
 
         $validator = Validator::make($request->all(), [
-            'name'         => 'sometimes|required|string|max:150',
-            'category'     => 'nullable|in:Coffee,Non-Coffee,Snack,Main Course',
-            'price'        => 'sometimes|required|numeric|min:0',
-            'stock'        => 'nullable|integer|min:0',
+            'name' => 'sometimes|required|string|max:150',
+            'category' => 'nullable|in:Coffee,Non-Coffee,Snack,Main Course',
+            'price' => 'sometimes|required|numeric|min:0',
+            'stock' => 'nullable|integer|min:0',
             'is_available' => 'nullable|boolean',
-            'description'  => 'nullable|string',
+            'description' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -119,11 +110,10 @@ class MenuController extends Controller
      * Menghapus data Menu.
      *
      * @param  int|string  $id
-     * @return JsonResponse
      */
-    public function destroy($id): JsonResponse
+    public function destroy(Request $request, $id): JsonResponse
     {
-        $menu = Menu::find($id);
+        $menu = Menu::where('user_id', $request->user()->id)->find($id);
 
         if (! $menu) {
             return $this->errorResponse(['menu' => ['Menu item not found']], 404, 'not_found');

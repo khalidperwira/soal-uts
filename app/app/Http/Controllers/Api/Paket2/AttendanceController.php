@@ -12,13 +12,10 @@ class AttendanceController extends Controller
 {
     /**
      * Menampilkan daftar data Presensi dengan filter tanggal & pencarian NIM/Nama.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Attendance::query();
+        $query = Attendance::query()->where('user_id', $request->user()->id);
 
         if ($request->filled('date')) {
             $query->where('date', $request->query('date'));
@@ -32,7 +29,7 @@ class AttendanceController extends Controller
             $search = $request->query('search');
             $query->where(function ($q) use ($search) {
                 $q->where('nim', 'like', "%{$search}%")
-                  ->orWhere('student_name', 'like', "%{$search}%");
+                    ->orWhere('student_name', 'like', "%{$search}%");
             });
         }
 
@@ -44,27 +41,24 @@ class AttendanceController extends Controller
 
     /**
      * Menyimpan data Presensi baru.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'nim'          => 'required|string|max:50',
+            'nim' => 'required|string|max:50',
             'student_name' => 'required|string|max:150',
-            'date'         => 'required|string|date_format:d-m-Y',
-            'time_in'      => 'required|date_format:H:i:s',
-            'time_out'     => 'nullable|date_format:H:i:s',
-            'status'       => 'nullable|in:Hadir,Izin,Sakit,Alpha',
-            'note'         => 'nullable|string|max:255',
+            'date' => 'required|string|date_format:d-m-Y',
+            'time_in' => 'required|date_format:H:i:s',
+            'time_out' => 'nullable|date_format:H:i:s',
+            'status' => 'nullable|in:Hadir,Izin,Sakit,Alpha',
+            'note' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
             return $this->errorResponse($validator->errors(), 400, 'bad_request');
         }
 
-        $attendance = Attendance::create($validator->validated());
+        $attendance = Attendance::create([...$validator->validated(), 'user_id' => $request->user()->id]);
 
         return $this->successResponse($attendance, 201);
     }
@@ -73,11 +67,10 @@ class AttendanceController extends Controller
      * Menampilkan detail satu data Presensi.
      *
      * @param  int|string  $id
-     * @return JsonResponse
      */
-    public function show($id): JsonResponse
+    public function show(Request $request, $id): JsonResponse
     {
-        $attendance = Attendance::find($id);
+        $attendance = Attendance::where('user_id', $request->user()->id)->find($id);
 
         if (! $attendance) {
             return $this->errorResponse(['attendance' => ['Attendance record not found']], 404, 'not_found');
@@ -89,26 +82,24 @@ class AttendanceController extends Controller
     /**
      * Memperbarui data Presensi (misal jam pulang / check-out atau koreksi status).
      *
-     * @param  Request  $request
      * @param  int|string  $id
-     * @return JsonResponse
      */
     public function update(Request $request, $id): JsonResponse
     {
-        $attendance = Attendance::find($id);
+        $attendance = Attendance::where('user_id', $request->user()->id)->find($id);
 
         if (! $attendance) {
             return $this->errorResponse(['attendance' => ['Attendance record not found']], 404, 'not_found');
         }
 
         $validator = Validator::make($request->all(), [
-            'nim'          => 'sometimes|required|string|max:50',
+            'nim' => 'sometimes|required|string|max:50',
             'student_name' => 'sometimes|required|string|max:150',
-            'date'         => 'sometimes|required|string|date_format:d-m-Y',
-            'time_in'      => 'sometimes|required|date_format:H:i:s',
-            'time_out'     => 'nullable|date_format:H:i:s',
-            'status'       => 'nullable|in:Hadir,Izin,Sakit,Alpha',
-            'note'         => 'nullable|string|max:255',
+            'date' => 'sometimes|required|string|date_format:d-m-Y',
+            'time_in' => 'sometimes|required|date_format:H:i:s',
+            'time_out' => 'nullable|date_format:H:i:s',
+            'status' => 'nullable|in:Hadir,Izin,Sakit,Alpha',
+            'note' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -124,11 +115,10 @@ class AttendanceController extends Controller
      * Menghapus data Presensi.
      *
      * @param  int|string  $id
-     * @return JsonResponse
      */
-    public function destroy($id): JsonResponse
+    public function destroy(Request $request, $id): JsonResponse
     {
-        $attendance = Attendance::find($id);
+        $attendance = Attendance::where('user_id', $request->user()->id)->find($id);
 
         if (! $attendance) {
             return $this->errorResponse(['attendance' => ['Attendance record not found']], 404, 'not_found');

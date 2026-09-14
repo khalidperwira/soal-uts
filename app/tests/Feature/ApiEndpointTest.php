@@ -16,7 +16,7 @@ class ApiEndpointTest extends TestCase
     protected function authenticate(): array
     {
         $user = User::factory()->create([
-            'email'    => 'tester_' . uniqid() . '@uts.test',
+            'email' => 'tester_'.uniqid().'@uts.test',
             'password' => bcrypt('password123'),
         ]);
 
@@ -24,7 +24,7 @@ class ApiEndpointTest extends TestCase
 
         return [
             'Authorization' => "Bearer {$token}",
-            'Accept'        => 'application/json',
+            'Accept' => 'application/json',
         ];
     }
 
@@ -35,9 +35,9 @@ class ApiEndpointTest extends TestCase
     {
         // 1.1 Register
         $regResponse = $this->postJson('/api/auth/register', [
-            'name'                  => 'Test Auth User',
-            'email'                 => 'authuser_' . uniqid() . '@uts.test',
-            'password'              => 'password123',
+            'name' => 'Test Auth User',
+            'email' => 'authuser_'.uniqid().'@uts.test',
+            'password' => 'password123',
             'password_confirmation' => 'password123',
         ]);
 
@@ -50,7 +50,7 @@ class ApiEndpointTest extends TestCase
 
         // 1.2 Login
         $loginResponse = $this->postJson('/api/auth/login', [
-            'email'    => $regResponse->json('body.user.email'),
+            'email' => $regResponse->json('body.user.email'),
             'password' => 'password123',
         ]);
 
@@ -61,7 +61,7 @@ class ApiEndpointTest extends TestCase
         $token = $loginResponse->json('body.token');
         $headers = [
             'Authorization' => "Bearer {$token}",
-            'Accept'        => 'application/json',
+            'Accept' => 'application/json',
         ];
 
         // 1.3 Me (Profile)
@@ -84,11 +84,11 @@ class ApiEndpointTest extends TestCase
 
         // 2.1 CREATE
         $createResponse = $this->postJson('/api/tasks', [
-            'title'       => 'Tugas Baru Testing',
+            'title' => 'Tugas Baru Testing',
             'description' => 'Deskripsi untuk pengujian otomatis',
-            'category'    => 'Kuliah',
-            'status'      => 'pending',
-            'due_date'    => '25-09-2026',
+            'category' => 'Kuliah',
+            'status' => 'pending',
+            'due_date' => '25-09-2026',
         ], $headers);
 
         $createResponse->assertStatus(201)
@@ -135,12 +135,12 @@ class ApiEndpointTest extends TestCase
 
         // 3.1 CREATE
         $createResponse = $this->postJson('/api/attendances', [
-            'nim'          => '239999001',
+            'nim' => '239999001',
             'student_name' => 'Mahasiswa Testing',
-            'date'         => '11-09-2026',
-            'time_in'      => '08:00:00',
-            'status'       => 'Hadir',
-            'note'         => 'Catatan presensi test',
+            'date' => '11-09-2026',
+            'time_in' => '08:00:00',
+            'status' => 'Hadir',
+            'note' => 'Catatan presensi test',
         ], $headers);
 
         $createResponse->assertStatus(201)
@@ -182,12 +182,12 @@ class ApiEndpointTest extends TestCase
 
         // 4.1 CREATE
         $createResponse = $this->postJson('/api/menus', [
-            'name'         => 'Caffe Mocha Testing',
-            'category'     => 'Coffee',
-            'price'        => 30000,
-            'stock'        => 50,
+            'name' => 'Caffe Mocha Testing',
+            'category' => 'Coffee',
+            'price' => 30000,
+            'stock' => 50,
             'is_available' => true,
-            'description'  => 'Espresso dengan cokelat dan susu',
+            'description' => 'Espresso dengan cokelat dan susu',
         ], $headers);
 
         $createResponse->assertStatus(201)
@@ -233,9 +233,9 @@ class ApiEndpointTest extends TestCase
         $createResponse = $this->postJson('/api/tickets', [
             'ticket_number' => 'TS-999',
             'customer_name' => 'Pelanggan Test',
-            'service_type'  => 'Customer Service',
-            'status'        => 'Menunggu',
-            'notes'         => 'Antrean baru',
+            'service_type' => 'Customer Service',
+            'status' => 'Menunggu',
+            'notes' => 'Antrean baru',
         ], $headers);
 
         $createResponse->assertStatus(201)
@@ -257,7 +257,7 @@ class ApiEndpointTest extends TestCase
         // 5.4 UPDATE (Panggil Loket)
         $updateResponse = $this->putJson("/api/tickets/{$ticketId}", [
             'counter_number' => 'Loket 3',
-            'status'         => 'Dipanggil',
+            'status' => 'Dipanggil',
         ], $headers);
 
         $updateResponse->assertStatus(200)
@@ -268,5 +268,65 @@ class ApiEndpointTest extends TestCase
         $deleteResponse = $this->deleteJson("/api/tickets/{$ticketId}", [], $headers);
         $deleteResponse->assertStatus(200)
             ->assertJson(['code' => 200, 'status' => 'success']);
+    }
+
+    /**
+     * 6. Test Isolasi Data: siswa A tidak boleh baca/ubah/hapus data siswa B.
+     */
+    public function test_data_isolation_between_users(): void
+    {
+        $headersA = $this->authenticate();
+        $headersB = $this->authenticate();
+
+        // Siswa A membuat data di keempat paket.
+        $taskId = $this->postJson('/api/tasks', [
+            'title' => 'Tugas Milik Siswa A',
+        ], $headersA)->json('body.id');
+
+        $attendanceId = $this->postJson('/api/attendances', [
+            'nim' => '239999002',
+            'student_name' => 'Siswa A',
+            'date' => '11-09-2026',
+            'time_in' => '08:00:00',
+        ], $headersA)->json('body.id');
+
+        $menuId = $this->postJson('/api/menus', [
+            'name' => 'Menu Milik Siswa A',
+            'price' => 10000,
+        ], $headersA)->json('body.id');
+
+        $ticketId = $this->postJson('/api/tickets', [
+            'ticket_number' => 'ISO-001',
+            'customer_name' => 'Pelanggan Siswa A',
+        ], $headersA)->json('body.id');
+
+        // Sanctum meng-cache user hasil resolve guard per-instance; reset dulu
+        // supaya panggilan berikutnya benar-benar diautentikasi ulang sebagai siswa B.
+        $this->app['auth']->forgetGuards();
+
+        // Siswa B tidak boleh melihat data siswa A di daftar index.
+        $this->getJson('/api/tasks', $headersB)
+            ->assertJsonMissing(['id' => $taskId]);
+
+        // Siswa B tidak boleh show/update/delete data siswa A -> harus 404, bukan 200/403.
+        $this->getJson("/api/tasks/{$taskId}", $headersB)->assertStatus(404);
+        $this->putJson("/api/tasks/{$taskId}", ['title' => 'Diubah Siswa B'], $headersB)->assertStatus(404);
+        $this->deleteJson("/api/tasks/{$taskId}", [], $headersB)->assertStatus(404);
+
+        $this->getJson("/api/attendances/{$attendanceId}", $headersB)->assertStatus(404);
+        $this->putJson("/api/attendances/{$attendanceId}", ['time_out' => '17:00:00'], $headersB)->assertStatus(404);
+        $this->deleteJson("/api/attendances/{$attendanceId}", [], $headersB)->assertStatus(404);
+
+        $this->getJson("/api/menus/{$menuId}", $headersB)->assertStatus(404);
+        $this->putJson("/api/menus/{$menuId}", ['price' => 5000], $headersB)->assertStatus(404);
+        $this->deleteJson("/api/menus/{$menuId}", [], $headersB)->assertStatus(404);
+
+        $this->getJson("/api/tickets/{$ticketId}", $headersB)->assertStatus(404);
+        $this->putJson("/api/tickets/{$ticketId}", ['status' => 'Batal'], $headersB)->assertStatus(404);
+        $this->deleteJson("/api/tickets/{$ticketId}", [], $headersB)->assertStatus(404);
+
+        // Data siswa A tetap aman dan masih bisa diakses oleh siswa A sendiri.
+        $this->app['auth']->forgetGuards();
+        $this->getJson("/api/tasks/{$taskId}", $headersA)->assertStatus(200);
     }
 }

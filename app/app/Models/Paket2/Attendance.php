@@ -2,8 +2,10 @@
 
 namespace App\Models\Paket2;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Attendance extends Model
 {
@@ -22,6 +24,7 @@ class Attendance extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'user_id',
         'nim',
         'student_name',
         'date',
@@ -50,5 +53,13 @@ class Attendance extends Model
         return [
             'date' => 'string',
         ];
+    }
+
+    /**
+     * Pemilik (siswa/user) dari data Attendance ini.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

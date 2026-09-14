@@ -12,13 +12,10 @@ class TicketController extends Controller
 {
     /**
      * Menampilkan daftar data Antrean Tiket dengan filter status & jenis layanan.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Ticket::query();
+        $query = Ticket::query()->where('user_id', $request->user()->id);
 
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
@@ -32,7 +29,7 @@ class TicketController extends Controller
             $search = $request->query('search');
             $query->where(function ($q) use ($search) {
                 $q->where('ticket_number', 'like', "%{$search}%")
-                  ->orWhere('customer_name', 'like', "%{$search}%");
+                    ->orWhere('customer_name', 'like', "%{$search}%");
             });
         }
 
@@ -44,26 +41,23 @@ class TicketController extends Controller
 
     /**
      * Menyimpan data Antrean Tiket baru.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'ticket_number'  => 'required|string|max:20',
-            'customer_name'  => 'required|string|max:150',
-            'service_type'   => 'nullable|in:Customer Service,Teller,Helpdesk',
-            'status'         => 'nullable|in:Menunggu,Dipanggil,Selesai,Batal',
+            'ticket_number' => 'required|string|max:20',
+            'customer_name' => 'required|string|max:150',
+            'service_type' => 'nullable|in:Customer Service,Teller,Helpdesk',
+            'status' => 'nullable|in:Menunggu,Dipanggil,Selesai,Batal',
             'counter_number' => 'nullable|string|max:10',
-            'notes'          => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return $this->errorResponse($validator->errors(), 400, 'bad_request');
         }
 
-        $ticket = Ticket::create($validator->validated());
+        $ticket = Ticket::create([...$validator->validated(), 'user_id' => $request->user()->id]);
 
         return $this->successResponse($ticket, 201);
     }
@@ -72,11 +66,10 @@ class TicketController extends Controller
      * Menampilkan detail satu data Antrean Tiket.
      *
      * @param  int|string  $id
-     * @return JsonResponse
      */
-    public function show($id): JsonResponse
+    public function show(Request $request, $id): JsonResponse
     {
-        $ticket = Ticket::find($id);
+        $ticket = Ticket::where('user_id', $request->user()->id)->find($id);
 
         if (! $ticket) {
             return $this->errorResponse(['ticket' => ['Ticket not found']], 404, 'not_found');
@@ -88,25 +81,23 @@ class TicketController extends Controller
     /**
      * Memperbarui data Antrean Tiket (misal panggil ke loket / ubah status / catatan).
      *
-     * @param  Request  $request
      * @param  int|string  $id
-     * @return JsonResponse
      */
     public function update(Request $request, $id): JsonResponse
     {
-        $ticket = Ticket::find($id);
+        $ticket = Ticket::where('user_id', $request->user()->id)->find($id);
 
         if (! $ticket) {
             return $this->errorResponse(['ticket' => ['Ticket not found']], 404, 'not_found');
         }
 
         $validator = Validator::make($request->all(), [
-            'ticket_number'  => 'sometimes|required|string|max:20',
-            'customer_name'  => 'sometimes|required|string|max:150',
-            'service_type'   => 'nullable|in:Customer Service,Teller,Helpdesk',
-            'status'         => 'nullable|in:Menunggu,Dipanggil,Selesai,Batal',
+            'ticket_number' => 'sometimes|required|string|max:20',
+            'customer_name' => 'sometimes|required|string|max:150',
+            'service_type' => 'nullable|in:Customer Service,Teller,Helpdesk',
+            'status' => 'nullable|in:Menunggu,Dipanggil,Selesai,Batal',
             'counter_number' => 'nullable|string|max:10',
-            'notes'          => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -122,11 +113,10 @@ class TicketController extends Controller
      * Menghapus data Antrean Tiket.
      *
      * @param  int|string  $id
-     * @return JsonResponse
      */
-    public function destroy($id): JsonResponse
+    public function destroy(Request $request, $id): JsonResponse
     {
-        $ticket = Ticket::find($id);
+        $ticket = Ticket::where('user_id', $request->user()->id)->find($id);
 
         if (! $ticket) {
             return $this->errorResponse(['ticket' => ['Ticket not found']], 404, 'not_found');

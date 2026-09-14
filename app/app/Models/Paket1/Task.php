@@ -2,8 +2,10 @@
 
 namespace App\Models\Paket1;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Task extends Model
 {
@@ -22,6 +24,7 @@ class Task extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'user_id',
         'title',
         'description',
         'category',
@@ -49,5 +52,13 @@ class Task extends Model
         return [
             'due_date' => 'string',
         ];
+    }
+
+    /**
+     * Pemilik (siswa/user) dari data Task ini.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

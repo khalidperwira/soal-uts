@@ -147,3 +147,23 @@ Pastikan error server 500 atau model not found (404) mengembalikan format JSON s
   ```
 - **Monitoring Log Real-time**:
   Gunakan `php artisan pail` untuk memantau trafik dan potensi aktivitas mencurigakan saat ujian berlangsung.
+
+---
+
+## 8. Pemisahan Document Root (`public/` vs Source Code)
+
+Backend ini jalan di atas FrankenPHP (bukan nginx + php-fpm), yang berarti web server dan PHP runtime jadi satu proses. Ini membuat pemisahan document root jadi krusial: kalau document root salah diarahkan ke root aplikasi, `vendor/`, `storage/`, `.env`, dan source code Laravel lainnya bisa ter-expose langsung lewat HTTP.
+
+Repo ini **tidak** menyertakan `Caddyfile` sendiri untuk container `app` — `Dockerfile` menjalankan `CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]`, yaitu Caddyfile bawaan image `dunglas/frankenphp:1-php8.4`. Sudah diverifikasi langsung dari image (`docker run --rm dunglas/frankenphp:1-php8.4 cat /etc/frankenphp/Caddyfile`) bahwa default-nya:
+
+```
+{$SERVER_NAME:localhost} {
+	root {$SERVER_ROOT:public/}
+	...
+	php_server { ... }
+}
+```
+
+Dengan `WORKDIR /app`, document root efektif adalah `/app/public` — sudah benar, hanya isi `public/` (via `index.php`) yang ter-expose ke internet; `vendor/`, `storage/`, `.env`, `app/`, `routes/` tidak bisa diakses langsung.
+
+**Rekomendasi (belum diterapkan):** karena konfigurasi ini bergantung pada default image upstream (tidak ter-commit di repo), sebaiknya buat `docker/Caddyfile` eksplisit (minimal `root * public/` + `php_server`), lalu `COPY` ke `/etc/frankenphp/Caddyfile` di `Dockerfile`. Ini membuat pemisahan docroot eksplisit dan ter-audit di git history, tidak diam-diam berubah kalau default upstream berubah di rilis image berikutnya.
