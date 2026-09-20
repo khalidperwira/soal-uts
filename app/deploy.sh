@@ -2,6 +2,14 @@
 # Deploy / update backend ujian. Jalankan dari folder /srv/ujian-api di VPS.
 set -euo pipefail
 
+# Nama project Compose (`ujian-api`) dipakai bersama semua salinan repo, jadi `up`
+# dari folder dengan .env dev akan menimpa container produksi. Tolak kalau bukan produksi.
+if ! grep -q '^APP_ENV=production$' .env 2>/dev/null; then
+  echo "ERROR: .env di $(pwd) bukan produksi (APP_ENV!=production). Batal." >&2
+  echo "Untuk update produksi dari clone repo, jalankan ../deploy-vps.sh" >&2
+  exit 1
+fi
+
 echo "==> Menarik kode terbaru"
 git pull --ff-only
 

@@ -221,7 +221,7 @@ php artisan ujian:reset {nis}
 |---|---|
 | Lihat log realtime | `docker compose logs -f app` |
 | Restart aplikasi | `docker compose restart app` |
-| Update kode | `./deploy.sh` |
+| Update kode | dari clone repo: `./deploy-vps.sh` (menyalin `app/` ke `/srv/ujian-api`, lalu build & restart). Jangan jalankan `deploy.sh` dari clone: nama project Compose sama dan `.env` dev akan menimpa produksi |
 | Masuk shell container | `docker compose exec app bash` |
 | Artisan | `docker compose exec app php artisan <perintah>` |
 | Backup manual | `/srv/scripts/backup-db.sh` |
