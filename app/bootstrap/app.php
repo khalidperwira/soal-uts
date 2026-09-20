@@ -1,5 +1,7 @@
 <?php
 
+use App\Traits\ApiResponse;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,9 +16,22 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: env('TRUSTED_PROXIES', ''));
+
+        // API ini tidak punya halaman login; jangan redirect ke route('login') (memicu 500).
+        $middleware->redirectGuestsTo(fn (Request $request) => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Request tanpa/dengan token tidak valid -> 401 dalam envelope standar.
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            $responder = new class
+            {
+                use ApiResponse;
+            };
+
+            return $responder->errorResponse('Unauthenticated.', 401, 'unauthorized');
+        });
     })->create();

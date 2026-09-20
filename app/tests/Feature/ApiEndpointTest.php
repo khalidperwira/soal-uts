@@ -29,6 +29,29 @@ class ApiEndpointTest extends TestCase
     }
 
     /**
+     * Request tanpa token ke endpoint terproteksi harus 401 (envelope standar),
+     * baik dengan maupun tanpa header Accept: application/json — bukan 500.
+     */
+    public function test_unauthenticated_request_returns_401_envelope(): void
+    {
+        foreach ([[], ['Accept' => 'application/json']] as $headers) {
+            $this->withHeaders($headers)
+                ->get('/api/tasks')
+                ->assertStatus(401)
+                ->assertExactJson([
+                    'code' => 401,
+                    'status' => 'unauthorized',
+                    'errors' => ['message' => ['Unauthenticated.']],
+                ]);
+
+            $this->withHeaders($headers)
+                ->get('/api/auth/me')
+                ->assertStatus(401)
+                ->assertJsonPath('status', 'unauthorized');
+        }
+    }
+
+    /**
      * 1. Test Autentikasi: Register, Login, Me, Logout.
      */
     public function test_auth_endpoints(): void
